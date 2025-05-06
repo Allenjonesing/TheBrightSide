@@ -44,58 +44,61 @@
 
     <script type="module">
         import * as webllm from "https://esm.run/@mlc-ai/web-llm";
-
-        const messages = [
-            {
-                content: "You are an optimistic AI rewriting negative news headlines in a more positive light.",
-                role: "system",
-            },
-        ];
-
-        const engine = new webllm.MLCEngine();
-        engine.setInitProgressCallback((report) => {
-            document.getElementById("output").textContent = `Model Loading: ${report.text}`;
-        });
-
-        const selectedModel = "TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC";
-        await engine.reload(selectedModel, { temperature: 1.0, top_p: 1 });
-
-        async function fetchNewsHeadline() {
-            try {
-                const res = await fetch("https://thebrightside.onrender.com/api/news");
-                const data = await res.json();
-                return data.headline;
-            } catch (err) {
-                throw new Error("Failed to fetch news headline. Check backend API.");
-            }
-        }
-
-        async function getOptimisticNews() {
-            try {
-                const headline = await fetchNewsHeadline();
-                messages.push({ content: `Rewrite this headline in a positive light: ${headline}`, role: "user" });
-
-                let curMessage = "";
-                const completion = await engine.chat.completions.create({ stream: true, messages });
-
-                for await (const chunk of completion) {
-                    const delta = chunk.choices[0].delta.content;
-                    if (delta) {
-                        curMessage += delta;
-                        document.getElementById("output").textContent = `Original: ${headline}\n\nBright Side (thinking...): ${curMessage}`;
-                    }
+    
+        (async () => {
+            const messages = [
+                {
+                    content: "You are an optimistic AI rewriting negative news headlines in a more positive light.",
+                    role: "system",
+                },
+            ];
+    
+            const engine = new webllm.MLCEngine();
+            engine.setInitProgressCallback((report) => {
+                document.getElementById("output").textContent = `Model Loading: ${report.text}`;
+            });
+    
+            const selectedModel = "TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC";
+            await engine.reload(selectedModel, { temperature: 1.0, top_p: 1 });
+    
+            async function fetchNewsHeadline() {
+                try {
+                    const res = await fetch("https://thebrightside.onrender.com/api/news");
+                    const data = await res.json();
+                    return data.headline;
+                } catch (err) {
+                    throw new Error("Failed to fetch news headline. Check backend API.");
                 }
-
-                const finalMessage = await engine.getMessage();
-                messages.push(finalMessage);
-                document.getElementById("output").textContent = `Original: ${headline}\n\nBright Side: ${finalMessage.content}`;
-            } catch (err) {
-                document.getElementById("output").textContent = `⚠️ ${err.message}`;
             }
-        }
-
-        getOptimisticNews();
+    
+            async function getOptimisticNews() {
+                try {
+                    const headline = await fetchNewsHeadline();
+                    messages.push({ content: `Rewrite this headline in a positive light: ${headline}`, role: "user" });
+    
+                    let curMessage = "";
+                    const completion = await engine.chat.completions.create({ stream: true, messages });
+    
+                    for await (const chunk of completion) {
+                        const delta = chunk.choices[0].delta.content;
+                        if (delta) {
+                            curMessage += delta;
+                            document.getElementById("output").textContent = `Original: ${headline}\n\nBright Side (thinking...): ${curMessage}`;
+                        }
+                    }
+    
+                    const finalMessage = await engine.getMessage();
+                    messages.push(finalMessage);
+                    document.getElementById("output").textContent = `Original: ${headline}\n\nBright Side: ${finalMessage.content}`;
+                } catch (err) {
+                    document.getElementById("output").textContent = `⚠️ ${err.message}`;
+                }
+            }
+    
+            // Kick it off
+            getOptimisticNews();
+        })();
     </script>
-</body>
+    </body>
 
 </html>
