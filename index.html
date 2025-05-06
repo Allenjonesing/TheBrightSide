@@ -57,11 +57,10 @@
             document.getElementById("output").textContent = `Model Loading: ${report.text}`;
         });
 
-        const selectedModel = "phi-2-q4f16_1";
+        const selectedModel = "TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC";
         await engine.reload(selectedModel, { temperature: 1.0, top_p: 1 });
 
         async function fetchNewsHeadline() {
-            console.log('fetchNewsHeadline...');
             try {
                 const res = await fetch("https://thebrightside.onrender.com/api/news");
                 const data = await res.json();
@@ -72,7 +71,6 @@
         }
 
         async function getOptimisticNews() {
-            console.log('getOptimisticNews...');
             try {
                 const headline = await fetchNewsHeadline();
                 messages.push({ content: `Rewrite this headline in a positive light: ${headline}`, role: "user" });
