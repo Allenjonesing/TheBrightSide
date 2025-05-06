@@ -57,7 +57,7 @@
             document.getElementById("output").textContent = `Model Loading: ${report.text}`;
         });
 
-        const selectedModel = "Llama-3-8B-Instruct-q4f32_1-MLC-1k";
+        const selectedModel = "TinyLlama-1.1B-Chat-q4f16_1-MLC";
         await engine.reload(selectedModel, { temperature: 1.0, top_p: 1 });
 
         async function fetchNewsHeadline() {
@@ -88,10 +88,8 @@
                     }
                 }
 
-                // Finalize message
                 const finalMessage = await engine.getMessage();
                 messages.push(finalMessage);
-
                 document.getElementById("output").textContent = `Original: ${headline}\n\nBright Side: ${finalMessage.content}`;
             } catch (err) {
                 document.getElementById("output").textContent = `⚠️ ${err.message}`;
