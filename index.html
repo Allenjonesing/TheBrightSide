@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Bright Side</title>
+  <script src="https://mlc.ai/web-llm/dist/webllm.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background: #fdfdfd;
+      max-width: 800px;
+      margin: auto;
+    }
+    textarea, input {
+      width: 100%;
+      margin: 1rem 0;
+      padding: 1rem;
+      font-size: 1rem;
+    }
+    button {
+      padding: 1rem;
+      font-size: 1rem;
+      background: #4caf50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .output {
+      white-space: pre-wrap;
+      border: 1px solid #ccc;
+      padding: 1rem;
+      margin-top: 1rem;
+      background: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h1>The Bright Side</h1>
+  <p>AI finds the bright side of today's real headlines.</p>
+
+  <button id="submit">Find the Bright Side</button>
+  <div id="output" class="output"></div>
+
+  <script>
+    let chat = null;
+
+    async function setupModel() {
+      document.getElementById("submit").innerText = "Loading model... please wait";
+      chat = await webllm.CreateChatSession();
+      document.getElementById("submit").innerText = "Find the Bright Side";
+    }
+
+    async function fetchNewsHeadline() {
+      try {
+        const response = await fetch('https://thebrightside.onrender.com/api/news');
+        const data = await response.json();
+        return data.articles[0].title;
+      } catch (e) {
+        throw new Error("Failed to fetch news headline. Please check your API key or internet connection.");
+      }
+    }
+
+    setupModel();
+
+    document.getElementById("submit").addEventListener("click", async () => {
+      if (!chat) return;
+
+      document.getElementById("output").innerText = "Fetching news...";
+
+      try {
+        const headline = await fetchNewsHeadline();
+        const prompt = `Rewrite this news story in a more optimistic light:\n${headline}`;
+        document.getElementById("output").innerText = "Thinking...";
+        const reply = await chat.generate(prompt);
+        document.getElementById("output").innerText = `Original: ${headline}\n\nBright Side: ${reply}`;
+      } catch (error) {
+        document.getElementById("output").innerText = error.message;
+      }
+    });
+  </script>
+</body>
+</html>
