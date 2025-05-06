@@ -57,7 +57,7 @@
             document.getElementById("output").textContent = `Model Loading: ${report.text}`;
         });
 
-        const selectedModel = "TinyLlama-1.1B-Chat-q4f16_1-MLC";
+        const selectedModel = "phi-2-q4f16_1";
         await engine.reload(selectedModel, { temperature: 1.0, top_p: 1 });
 
         async function fetchNewsHeadline() {
