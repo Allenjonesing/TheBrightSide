@@ -57,7 +57,7 @@
 
     async function fetchNewsHeadline() {
       try {
-        const response = await fetch('https://gnews.io/api/v4/top-headlines?lang=en&country=us&max=1&token=YOUR_API_KEY');
+        const response = await fetch('https://thebrightside.onrender.com/api/news');
         const data = await response.json();
         return data.articles[0].title;
       } catch (e) {
