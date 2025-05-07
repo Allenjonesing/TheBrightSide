@@ -1,104 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Bright Side</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 2rem;
-            background: #fdfdfd;
-            max-width: 800px;
-            margin: auto;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Bright Side</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background: #fdfdfd;
+      max-width: 800px;
+      margin: auto;
+    }
 
-        button {
-            padding: 1rem;
-            font-size: 1rem;
-            background: #4caf50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #45a049;
-        }
-
-        .output {
-            white-space: pre-wrap;
-            border: 1px solid #ccc;
-            padding: 1rem;
-            margin-top: 1rem;
-            background: #f9f9f9;
-        }
-    </style>
+    .output {
+      white-space: pre-wrap;
+      border: 1px solid #ccc;
+      padding: 1rem;
+      margin-top: 1rem;
+      background: #f9f9f9;
+    }
+  </style>
 </head>
-
 <body>
-    <h1>The Bright Side</h1>
-    <p>Loading positive news magic...</p>
-    <div id="output" class="output">Fetching news and initializing AI...</div>
+  <h1>The Bright Side</h1>
+  <p>Fetching today's top headline...</p>
+  <div id="output" class="output">Loading...</div>
 
-    <script type="module">
-        import * as webllm from "https://esm.run/@mlc-ai/web-llm";
-    
-        (async () => {
-            const messages = [
-                {
-                    content: "You are an optimistic AI rewriting negative news headlines in a more positive light.",
-                    role: "system",
-                },
-            ];
-    
-            const engine = new webllm.MLCEngine();
-            engine.setInitProgressCallback((report) => {
-                document.getElementById("output").textContent = `Model Loading: ${report.text}`;
-            });
-    
-            const selectedModel = "TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC";
-            await engine.reload(selectedModel, { temperature: 1.0, top_p: 1 });
-    
-            async function fetchNewsHeadline() {
-                try {
-                    const res = await fetch("https://thebrightside.onrender.com/api/news");
-                    const data = await res.json();
-                    return data.headline;
-                } catch (err) {
-                    throw new Error("Failed to fetch news headline. Check backend API.");
-                }
-            }
-    
-            async function getOptimisticNews() {
-                try {
-                    const headline = await fetchNewsHeadline();
-                    messages.push({ content: `Rewrite this headline in a positive light: ${headline}`, role: "user" });
-    
-                    let curMessage = "";
-                    const completion = await engine.chat.completions.create({ stream: true, messages });
-    
-                    for await (const chunk of completion) {
-                        const delta = chunk.choices[0].delta.content;
-                        if (delta) {
-                            curMessage += delta;
-                            document.getElementById("output").textContent = `Original: ${headline}\n\nBright Side (thinking...): ${curMessage}`;
-                        }
-                    }
-    
-                    const finalMessage = await engine.getMessage();
-                    messages.push(finalMessage);
-                    document.getElementById("output").textContent = `Original: ${headline}\n\nBright Side: ${finalMessage.content}`;
-                } catch (err) {
-                    document.getElementById("output").textContent = `⚠️ ${err.message}`;
-                }
-            }
-    
-            // Kick it off
-            getOptimisticNews();
-        })();
-    </script>
-    </body>
+  <script>
+    async function fetchHeadline() {
+      const output = document.getElementById("output");
+      try {
+        const res = await fetch("https://thebrightside.onrender.com/api/news");
+        const data = await res.json();
+        output.textContent = `Headline: ${data.headline}`;
+      } catch (err) {
+        output.textContent = `⚠️ Failed to fetch news: ${err.message}`;
+      }
+    }
 
+    fetchHeadline();
+  </script>
+</body>
 </html>
