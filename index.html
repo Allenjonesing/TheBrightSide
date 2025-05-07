@@ -20,6 +20,15 @@
       margin-top: 1rem;
       background: #f9f9f9;
     }
+
+    .headline {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .bright {
+      color: #2e7d32;
+    }
   </style>
 </head>
 <body>
@@ -33,7 +42,11 @@
       try {
         const res = await fetch("https://workers-playground-blue-block-c846.allenjonesing.workers.dev/api/news");
         const data = await res.json();
-        output.textContent = `Headline: ${data.headline}`;
+
+        output.innerHTML = `
+          <div class="headline">📰 Original: ${data.headline}</div>
+          <div class="bright">✨ Bright Side: ${data.bright.replace(/^"|"$/g, '')}</div>
+        `;
       } catch (err) {
         output.textContent = `⚠️ Failed to fetch news: ${err.message}`;
       }
