@@ -82,9 +82,9 @@
             <div class="body">${article.body}</div>
             <div class="related">
               🔍 Related Uplifting Stories:<br/>
-              ${article.related && article.related.length ? article.related.slice(0, 5).map(r => `
+              ${article.related && article.related.length ? article.related.map(r => `
                 <a href="${r.link}" target="_blank" title="${r.title}">
-                  ${r.title.length > 50 ? r.title.slice(0, 50) + '…' : r.title}
+                  ${r.title.length > 60 ? r.title.slice(0, 60) + '…' : r.title}
                 </a>`).join('<br/>') : 'No related uplifting stories found.'}
             </div>
             <div class="bright">✨ Bright Side: ${article.bright.replace(/^"|"$/g, '')}</div>
