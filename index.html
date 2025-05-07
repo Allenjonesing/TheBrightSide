@@ -13,57 +13,64 @@
       margin: auto;
     }
 
-    .output {
+    .article {
+      white-space: pre-wrap;
       border: 1px solid #ccc;
-      padding: 1.5rem;
+      padding: 1rem;
+      margin-top: 1rem;
       background: #f9f9f9;
-      border-left: 5px solid #4caf50;
     }
 
     .headline {
       font-weight: bold;
-      color: #c62828;
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
     }
 
     .bright {
       color: #2e7d32;
-      font-style: italic;
     }
 
-    h1 {
-      margin-bottom: 0.5rem;
-    }
-
-    .sub {
-      font-size: 0.95rem;
-      color: #555;
-      margin-bottom: 2rem;
+    .error {
+      color: red;
     }
   </style>
 </head>
 <body>
   <h1>The Bright Side</h1>
-  <p class="sub">Finding light in the darkest headlines...</p>
-  <div id="output" class="output">Loading...</div>
+  <p>Fetching today’s top headlines and bright sides...</p>
+  <div id="output">Loading...</div>
 
   <script>
-    async function fetchHeadline() {
+    async function fetchHeadlines() {
       const output = document.getElementById("output");
+      output.textContent = "Loading...";
+
       try {
         const res = await fetch("https://workers-playground-blue-block-c846.allenjonesing.workers.dev/api/news");
         const data = await res.json();
 
-        output.innerHTML = `
-          <div class="headline">🛑 Most Negative Headline: ${data.headline}</div>
-          <div class="bright">✨ Bright Side: ${data.bright.replace(/^"|"$/g, '')}</div>
-        `;
+        if (!Array.isArray(data.articles)) {
+          output.innerHTML = `<div class="error">⚠️ Unexpected response format.</div>`;
+          return;
+        }
+
+        output.innerHTML = "";
+
+        data.articles.forEach(article => {
+          const div = document.createElement("div");
+          div.className = "article";
+          div.innerHTML = `
+            <div class="headline">📰 Original: ${article.headline}</div>
+            <div class="bright">✨ Bright Side: ${article.bright.replace(/^"|"$/g, '')}</div>
+          `;
+          output.appendChild(div);
+        });
       } catch (err) {
-        output.textContent = `⚠️ Failed to fetch news: ${err.message}`;
+        output.innerHTML = `<div class="error">⚠️ Failed to fetch news: ${err.message}</div>`;
       }
     }
 
-    fetchHeadline();
+    fetchHeadlines();
   </script>
 </body>
 </html>
