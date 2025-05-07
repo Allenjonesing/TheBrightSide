@@ -27,29 +27,19 @@
       margin-bottom: 0.3rem;
     }
 
-    .bright {
-      color: #2e7d32;
-      margin-top: 0.7rem;
-    }
-
-    .related {
-      font-size: 0.95rem;
-      margin-top: 0.5rem;
-      color: #333;
-    }
-
-    .related a {
-      display: inline-block;
-      margin-right: 0.5rem;
-      margin-bottom: 0.2rem;
-      text-decoration: none;
-      color: #1a73e8;
-    }
-
     .body {
       color: #444;
       font-size: 0.95rem;
       margin-bottom: 0.7rem;
+    }
+
+    .bright-summary {
+      font-size: 1.05rem;
+      padding: 1rem;
+      background: #e8f5e9;
+      color: #2e7d32;
+      margin-bottom: 2rem;
+      border-left: 5px solid #81c784;
     }
 
     .article-container {
@@ -76,20 +66,16 @@
           return;
         }
 
-        output.innerHTML = data.articles.map(article => `
+        const brightBlock = `<div class="bright-summary">✨ ${data.bright.replace(/^"|"$/g, '')}</div>`;
+
+        const articleBlocks = data.articles.map(article => `
           <div class="article-container">
-            <div class="headline">📰 Original: <a href="${article.link}" target="_blank">${article.headline}</a></div>
+            <div class="headline">📰 Original: <a href="${article.link}" target="_blank">${article.title}</a></div>
             <div class="body">${article.body}</div>
-            <div class="related">
-              🔍 Related Uplifting Stories:<br/>
-              ${article.related && article.related.length ? article.related.map(r => `
-                <a href="${r.link}" target="_blank" title="${r.title}">
-                  ${r.title.length > 60 ? r.title.slice(0, 60) + '…' : r.title}
-                </a>`).join('<br/>') : 'No related uplifting stories found.'}
-            </div>
-            <div class="bright">✨ Bright Side: ${article.bright.replace(/^"|"$/g, '')}</div>
           </div>
         `).join("");
+
+        output.innerHTML = brightBlock + articleBlocks;
       } catch (err) {
         output.textContent = `⚠️ Failed to fetch news: ${err.message}`;
       }
