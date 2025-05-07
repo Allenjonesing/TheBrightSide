@@ -13,83 +13,80 @@
       margin: auto;
     }
 
-    .article {
-      white-space: pre-wrap;
+    .card {
       border: 1px solid #ccc;
       padding: 1rem;
-      margin-top: 1rem;
+      margin-bottom: 1rem;
       background: #f9f9f9;
     }
 
     .headline {
       font-weight: bold;
-      margin-bottom: 0.5rem;
     }
 
     .bright {
       color: #2e7d32;
-      margin-bottom: 0.5rem;
+      margin-top: 0.5rem;
     }
 
     .related {
-      font-size: 0.95rem;
-      color: #444;
-      margin-top: 0.5rem;
+      margin-top: 1rem;
     }
 
     .related-title {
       font-weight: bold;
-      margin-top: 0.5rem;
+      margin-bottom: 0.25rem;
+      color: #003366;
     }
 
-    .error {
-      color: red;
+    .related-article {
+      margin-left: 1rem;
     }
   </style>
 </head>
 <body>
   <h1>The Bright Side</h1>
-  <p>Fetching today’s top headlines and bright sides...</p>
+  <p>Fetching today's top headlines and bright sides...</p>
   <div id="output">Loading...</div>
 
   <script>
-    async function fetchHeadlines() {
+    async function fetchNews() {
       const output = document.getElementById("output");
-      output.textContent = "Loading...";
-
       try {
         const res = await fetch("https://workers-playground-blue-block-c846.allenjonesing.workers.dev/api/news");
         const data = await res.json();
 
-        if (!Array.isArray(data.articles)) {
-          output.innerHTML = `<div class="error">⚠️ Unexpected response format.</div>`;
+        if (!data.articles?.length) {
+          output.textContent = "⚠️ No news articles found.";
           return;
         }
 
-        output.innerHTML = "";
+        output.innerHTML = data.articles.map(article => {
+          const relatedHTML = article.related?.map(r => `
+            <div class="related-article">
+              <strong>${r.title}</strong><br />
+              <em>${r.description}</em>
+            </div>
+          `).join("") || "<div class='related-article'><em>No related uplifting stories found.</em></div>";
 
-        data.articles.forEach(article => {
-          const div = document.createElement("div");
-          div.className = "article";
-
-          const relatedHtml = article.related && article.related.length
-            ? `<div class="related-title">🔍 Related Uplifting Stories:</div><ul class="related">${article.related.map(r => `<li>${r}</li>`).join('')}</ul>`
-            : '';
-
-          div.innerHTML = `
-            <div class="headline">📰 Original: ${article.headline}</div>
-            <div class="bright">✨ Bright Side: ${article.bright.replace(/^"|"$/g, '')}</div>
-            ${relatedHtml}
+          return `
+            <div class="card">
+              <div class="headline">📰 Original: ${article.headline}</div>
+              <div class="body">${article.body || "(No description provided)"}</div>
+              <div class="related">
+                <div class="related-title">🔍 Related Uplifting Stories:</div>
+                ${relatedHTML}
+              </div>
+              <div class="bright">✨ Bright Side: ${article.bright}</div>
+            </div>
           `;
-
-          output.appendChild(div);
-        });
+        }).join("");
       } catch (err) {
-        output.innerHTML = `<div class="error">⚠️ Failed to fetch news: ${err.message}</div>`;
+        output.textContent = `⚠️ Failed to fetch news: ${err.message}`;
       }
     }
 
-    fetchHeadlines();
+    fetchNews();
   </script>
 </body>
 </html>
