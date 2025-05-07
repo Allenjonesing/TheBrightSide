@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: sans-serif;
-      padding: 2rem;
+      padding: 1.5rem;
       background: #fdfdfd;
       max-width: 800px;
       margin: auto;
@@ -23,29 +23,48 @@
 
     .headline {
       font-weight: bold;
-      font-size: 1.2rem;
-      margin-bottom: 0.3rem;
+      font-size: 1.1rem;
+      margin-bottom: 0.2rem;
     }
 
     .body {
       color: #444;
       font-size: 0.95rem;
-      margin-bottom: 0.7rem;
+      margin-bottom: 0.4rem;
     }
 
     .bright-summary {
-      font-size: 1.05rem;
-      padding: 1rem;
+      font-size: 1rem;
+      padding: 0.8rem 1rem;
       background: #e8f5e9;
       color: #2e7d32;
-      margin-bottom: 2rem;
-      border-left: 5px solid #81c784;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid #81c784;
     }
 
     .article-container {
-      margin-bottom: 2.5rem;
-      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.8rem;
       border-bottom: 1px solid #ddd;
+    }
+
+    h1 {
+      margin-bottom: 0.4rem;
+    }
+
+    p {
+      margin-top: 0;
+      margin-bottom: 0.8rem;
+      font-size: 0.95rem;
+    }
+
+    a {
+      color: #1a0dab;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
@@ -58,6 +77,8 @@
     async function fetchBrightNews() {
       const output = document.getElementById("output");
       try {
+        window.scrollTo(0, 0); // Reset scroll position
+
         const res = await fetch("https://workers-playground-blue-block-c846.allenjonesing.workers.dev/api/news");
         const data = await res.json();
 
@@ -66,7 +87,11 @@
           return;
         }
 
-        const brightBlock = `<div class="bright-summary">✨ ${data.bright.replace(/^"|"$/g, '')}</div>`;
+        const brightBlock = `
+          <div class="bright-summary">
+            ✨ ${data.bright.replace(/^"|"$/g, '')}
+          </div>
+        `;
 
         const articleBlocks = data.articles.map(article => `
           <div class="article-container">
@@ -76,6 +101,7 @@
         `).join("");
 
         output.innerHTML = brightBlock + articleBlocks;
+
       } catch (err) {
         output.textContent = `⚠️ Failed to fetch news: ${err.message}`;
       }
