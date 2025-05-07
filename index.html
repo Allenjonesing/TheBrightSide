@@ -12,35 +12,37 @@
       max-width: 800px;
       margin: auto;
     }
-
-    .card {
-      border: 1px solid #ccc;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      background: #f9f9f9;
+    .article {
+      margin-bottom: 2rem;
     }
-
     .headline {
       font-weight: bold;
+      font-size: 1.2rem;
     }
-
     .bright {
       color: #2e7d32;
       margin-top: 0.5rem;
     }
-
     .related {
-      margin-top: 1rem;
+      font-size: 0.9rem;
+      margin: 0.5rem 0 1rem 1rem;
+      list-style-type: square;
+      padding-left: 1rem;
     }
-
-    .related-title {
-      font-weight: bold;
-      margin-bottom: 0.25rem;
-      color: #003366;
+    .related li {
+      margin: 0.3rem 0;
     }
-
-    .related-article {
-      margin-left: 1rem;
+    .related a {
+      color: #1565c0;
+      text-decoration: none;
+    }
+    .related a:hover {
+      text-decoration: underline;
+    }
+    .original-link {
+      font-size: 0.9rem;
+      margin-top: 0.3rem;
+      display: inline-block;
     }
   </style>
 </head>
@@ -50,43 +52,42 @@
   <div id="output">Loading...</div>
 
   <script>
-    async function fetchNews() {
+    async function fetchHeadlines() {
       const output = document.getElementById("output");
       try {
         const res = await fetch("https://workers-playground-blue-block-c846.allenjonesing.workers.dev/api/news");
         const data = await res.json();
 
-        if (!data.articles?.length) {
-          output.textContent = "⚠️ No news articles found.";
-          return;
-        }
+        output.innerHTML = "";
+        data.articles.forEach(article => {
+          const articleDiv = document.createElement("div");
+          articleDiv.className = "article";
 
-        output.innerHTML = data.articles.map(article => {
-          const relatedHTML = article.related?.map(r => `
-            <div class="related-article">
-              <strong>${r.title}</strong><br />
-              <em>${r.description}</em>
-            </div>
-          `).join("") || "<div class='related-article'><em>No related uplifting stories found.</em></div>";
+          const headline = `<div class="headline">📰 ${article.headline}</div>`;
+          const body = `<div>${article.body}</div>`;
+          const link = article.link ? `<a class="original-link" href="${article.link}" target="_blank">Read more</a>` : "";
 
-          return `
-            <div class="card">
-              <div class="headline">📰 Original: ${article.headline}</div>
-              <div class="body">${article.body || "(No description provided)"}</div>
-              <div class="related">
-                <div class="related-title">🔍 Related Uplifting Stories:</div>
-                ${relatedHTML}
-              </div>
-              <div class="bright">✨ Bright Side: ${article.bright}</div>
-            </div>
-          `;
-        }).join("");
+          let related = "<ul class='related'><strong>🔍 Related Uplifting Stories:</strong>";
+          if (article.related?.length) {
+            article.related.forEach(rel => {
+              related += `<li><a href="${rel.link}" title="${rel.description}" target="_blank">${rel.title}</a></li>`;
+            });
+          } else {
+            related += "<li>No related uplifting stories found.</li>";
+          }
+          related += "</ul>";
+
+          const bright = `<div class="bright">✨ ${article.bright}</div>`;
+
+          articleDiv.innerHTML = `${headline}${body}${link}${related}${bright}`;
+          output.appendChild(articleDiv);
+        });
       } catch (err) {
         output.textContent = `⚠️ Failed to fetch news: ${err.message}`;
       }
     }
 
-    fetchNews();
+    fetchHeadlines();
   </script>
 </body>
 </html>
