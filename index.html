@@ -12,82 +12,74 @@
       max-width: 800px;
       margin: auto;
     }
-    .article {
-      margin-bottom: 2rem;
+
+    .output {
+      white-space: pre-wrap;
+      border: 1px solid #ccc;
+      padding: 1rem;
+      margin-top: 1rem;
+      background: #f9f9f9;
     }
+
     .headline {
       font-weight: bold;
       font-size: 1.2rem;
     }
+
     .bright {
       color: #2e7d32;
       margin-top: 0.5rem;
     }
+
     .related {
-      font-size: 0.9rem;
-      margin: 0.5rem 0 1rem 1rem;
-      list-style-type: square;
-      padding-left: 1rem;
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+      color: #333;
     }
-    .related li {
-      margin: 0.3rem 0;
-    }
+
     .related a {
-      color: #1565c0;
-      text-decoration: none;
-    }
-    .related a:hover {
-      text-decoration: underline;
-    }
-    .original-link {
-      font-size: 0.9rem;
-      margin-top: 0.3rem;
       display: inline-block;
+      margin-right: 0.5rem;
+      margin-bottom: 0.2rem;
+      text-decoration: none;
+      color: #1a73e8;
     }
   </style>
 </head>
 <body>
   <h1>The Bright Side</h1>
   <p>Fetching today's top headlines and bright sides...</p>
-  <div id="output">Loading...</div>
+  <div id="output" class="output">Loading...</div>
 
   <script>
-    async function fetchHeadlines() {
+    async function fetchBrightNews() {
       const output = document.getElementById("output");
       try {
         const res = await fetch("https://workers-playground-blue-block-c846.allenjonesing.workers.dev/api/news");
         const data = await res.json();
 
-        output.innerHTML = "";
-        data.articles.forEach(article => {
-          const articleDiv = document.createElement("div");
-          articleDiv.className = "article";
+        if (!data.articles || !Array.isArray(data.articles)) {
+          output.textContent = "No articles returned.";
+          return;
+        }
 
-          const headline = `<div class="headline">📰 ${article.headline}</div>`;
-          const body = `<div>${article.body}</div>`;
-          const link = article.link ? `<a class="original-link" href="${article.link}" target="_blank">Read more</a>` : "";
-
-          let related = "<ul class='related'><strong>🔍 Related Uplifting Stories:</strong>";
-          if (article.related?.length) {
-            article.related.forEach(rel => {
-              related += `<li><a href="${rel.link}" title="${rel.description}" target="_blank">${rel.title}</a></li>`;
-            });
-          } else {
-            related += "<li>No related uplifting stories found.</li>";
-          }
-          related += "</ul>";
-
-          const bright = `<div class="bright">✨ ${article.bright}</div>`;
-
-          articleDiv.innerHTML = `${headline}${body}${link}${related}${bright}`;
-          output.appendChild(articleDiv);
-        });
+        output.innerHTML = data.articles.map(article => `
+          <div style="margin-bottom: 2rem;">
+            <div class="headline">📰 Original: <a href="${article.link}" target="_blank">${article.headline}</a></div>
+            <div class="body">${article.body}</div>
+            <div class="related">
+              🔍 Related Uplifting Stories:<br/>
+              ${article.related.slice(0, 5).map(r => `<a href="${r.link}" target="_blank" title="${r.title}">${r.title.length > 50 ? r.title.slice(0, 50) + '…' : r.title}</a>`).join('<br/>') || 'No related uplifting stories found.'}
+            </div>
+            <div class="bright">✨ Bright Side: ${article.bright.replace(/^"|"$/g, '')}</div>
+          </div>
+        `).join("");
       } catch (err) {
         output.textContent = `⚠️ Failed to fetch news: ${err.message}`;
       }
     }
 
-    fetchHeadlines();
+    fetchBrightNews();
   </script>
 </body>
 </html>
