@@ -14,11 +14,16 @@
     }
 
     .output {
-      white-space: pre-wrap;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .card {
       border: 1px solid #ccc;
       padding: 1rem;
-      margin-top: 1rem;
       background: #f9f9f9;
+      border-left: 5px solid #4caf50;
     }
 
     .headline {
@@ -33,26 +38,34 @@
 </head>
 <body>
   <h1>The Bright Side</h1>
-  <p>Fetching today's top headline...</p>
+  <p>Fetching today’s top headlines and bright sides...</p>
   <div id="output" class="output">Loading...</div>
 
   <script>
-    async function fetchHeadline() {
+    async function fetchHeadlines() {
       const output = document.getElementById("output");
       try {
         const res = await fetch("https://workers-playground-blue-block-c846.allenjonesing.workers.dev/api/news");
         const data = await res.json();
 
-        output.innerHTML = `
-          <div class="headline">📰 Original: ${data.headline}</div>
-          <div class="bright">✨ Bright Side: ${data.bright.replace(/^"|"$/g, '')}</div>
-        `;
+        if (!Array.isArray(data)) {
+          output.textContent = "⚠️ Unexpected response format.";
+          return;
+        }
+
+        output.innerHTML = data.map(pair => `
+          <div class="card">
+            <div class="headline">📰 Original: ${pair.original}</div>
+            <div class="bright">✨ Bright Side: ${pair.bright.replace(/^"|"$/g, '')}</div>
+          </div>
+        `).join("");
+
       } catch (err) {
         output.textContent = `⚠️ Failed to fetch news: ${err.message}`;
       }
     }
 
-    fetchHeadline();
+    fetchHeadlines();
   </script>
 </body>
 </html>
