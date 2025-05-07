@@ -1,71 +1,138 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Bright Side</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-      background: #fdfdfd;
-      max-width: 800px;
-      margin: auto;
-    }
+const rateLimitMap = new Map();
+let cachedHeadlines = [];
+let lastFetchTime = 0;
 
-    .output {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
 
-    .card {
-      border: 1px solid #ccc;
-      padding: 1rem;
-      background: #f9f9f9;
-      border-left: 5px solid #4caf50;
-    }
+    if (url.pathname === "/api/news") {
+      const clientIP = request.headers.get("CF-Connecting-IP") || "unknown";
+      const now = Date.now();
 
-    .headline {
-      font-weight: bold;
-      margin-bottom: 0.5rem;
-    }
-
-    .bright {
-      color: #2e7d32;
-    }
-  </style>
-</head>
-<body>
-  <h1>The Bright Side</h1>
-  <p>Fetching today’s top headlines and bright sides...</p>
-  <div id="output" class="output">Loading...</div>
-
-  <script>
-    async function fetchHeadlines() {
-      const output = document.getElementById("output");
-      try {
-        const res = await fetch("https://workers-playground-blue-block-c846.allenjonesing.workers.dev/api/news");
-        const data = await res.json();
-
-        if (!Array.isArray(data)) {
-          output.textContent = "⚠️ Unexpected response format.";
-          return;
-        }
-
-        output.innerHTML = data.map(pair => `
-          <div class="card">
-            <div class="headline">📰 Original: ${pair.original}</div>
-            <div class="bright">✨ Bright Side: ${pair.bright.replace(/^"|"$/g, '')}</div>
-          </div>
-        `).join("");
-
-      } catch (err) {
-        output.textContent = `⚠️ Failed to fetch news: ${err.message}`;
+      // Rate limiting: 10/hr per IP
+      const history = rateLimitMap.get(clientIP) || [];
+      const recent = history.filter(ts => now - ts < 60 * 60 * 1000);
+      if (recent.length >= 10) {
+        return new Response(JSON.stringify({ error: "Rate limit exceeded: 10 requests/hr." }), {
+          status: 429,
+          headers: corsHeaders()
+        });
       }
+      rateLimitMap.set(clientIP, [...recent, now]);
+
+      // Cache headlines for 10 min
+      if (!cachedHeadlines.length || now - lastFetchTime > 10 * 60 * 1000) {
+        try {
+          const newsRes = await fetch("https://newsdata.io/api/1/news?country=us&language=en&category=top&apikey=REDACTED");
+          const newsData = await newsRes.json();
+          cachedHeadlines = newsData.results?.map(a => a.title).filter(Boolean).slice(0, 5) || [];
+          lastFetchTime = now;
+        } catch (e) {
+          // Fallback: Try GNews
+          const gnewsRes = await fetch("https://gnews.io/api/v4/top-headlines?lang=en&country=us&max=5&token=REDACTED");
+          const gnewsData = await gnewsRes.json();
+          cachedHeadlines = gnewsData.articles?.map(a => a.title).filter(Boolean).slice(0, 5) || ["Fallback headline"];
+        }
+      }
+
+      // Step 2: Use OpenAI to rank by negativity
+      const scored = await Promise.all(cachedHeadlines.map(async title => {
+        try {
+          const prompt = `Rate the emotional tone of this news headline from 1 (very negative) to 10 (very positive): "${title}"`;
+          const res = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer REDACTED`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              model: "gpt-3.5-turbo",
+              messages: [{ role: "user", content: prompt }],
+              temperature: 0.3,
+              max_tokens: 10
+            })
+          });
+          const data = await res.json();
+          const score = parseInt(data.choices?.[0]?.message?.content?.trim()) || 5;
+          return { title, score };
+        } catch {
+          return { title, score: 5 };
+        }
+      }));
+
+      const mostNegative = scored.sort((a, b) => a.score - b.score)[0];
+
+      // Step 3: Extract keywords from most negative
+      const keywordPrompt = `Extract 3 important keywords from this headline for use in a news search: "${mostNegative.title}"`;
+
+      const keywordRes = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer REDACTED`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [{ role: "user", content: keywordPrompt }],
+          temperature: 0.3,
+          max_tokens: 30
+        })
+      });
+
+      const keywordText = await keywordRes.json();
+      const keywords = keywordText.choices?.[0]?.message?.content?.trim().replace(/\s+/g, "+") || "community+response";
+
+      // Step 4: Search NewsData.io for related positive articles
+      let brightHeadline = "";
+      try {
+        const searchRes = await fetch(`https://newsdata.io/api/1/news?apikey=REDACTED&q=${keywords}&language=en&country=us`);
+        const searchData = await searchRes.json();
+        brightHeadline = searchData.results?.find(a => a.title)?.title || "";
+      } catch {
+        brightHeadline = "";
+      }
+
+      // Step 5: If nothing good found, fall back to GPT optimism
+      let finalBright = brightHeadline;
+      if (!brightHeadline) {
+        const rewritePrompt = `Rewrite this headline in a more hopeful or constructive tone, while staying truthful:\n"${mostNegative.title}"`;
+
+        const rewriteRes = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer REDACTED`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "gpt-3.5-turbo",
+            messages: [{ role: "user", content: rewritePrompt }],
+            temperature: 0.7,
+            max_tokens: 60
+          })
+        });
+
+        const rewriteData = await rewriteRes.json();
+        finalBright = rewriteData.choices?.[0]?.message?.content?.trim() || "Could not generate optimism.";
+      }
+
+      return new Response(JSON.stringify({
+        headline: mostNegative.title,
+        bright: finalBright
+      }), {
+        headers: corsHeaders()
+      });
     }
 
-    fetchHeadlines();
-  </script>
-</body>
-</html>
+    return new Response("BrightSide Worker active!", {
+      headers: { "Content-Type": "text/plain" }
+    });
+  }
+};
+
+function corsHeaders() {
+  return {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "https://thebrightside-1.onrender.com"
+  };
+}
