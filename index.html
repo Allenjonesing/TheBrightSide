@@ -28,6 +28,18 @@
 
     .bright {
       color: #2e7d32;
+      margin-bottom: 0.5rem;
+    }
+
+    .related {
+      font-size: 0.95rem;
+      color: #444;
+      margin-top: 0.5rem;
+    }
+
+    .related-title {
+      font-weight: bold;
+      margin-top: 0.5rem;
     }
 
     .error {
@@ -59,10 +71,17 @@
         data.articles.forEach(article => {
           const div = document.createElement("div");
           div.className = "article";
+
+          const relatedHtml = article.related && article.related.length
+            ? `<div class="related-title">🔍 Related Uplifting Stories:</div><ul class="related">${article.related.map(r => `<li>${r}</li>`).join('')}</ul>`
+            : '';
+
           div.innerHTML = `
             <div class="headline">📰 Original: ${article.headline}</div>
             <div class="bright">✨ Bright Side: ${article.bright.replace(/^"|"$/g, '')}</div>
+            ${relatedHtml}
           `;
+
           output.appendChild(div);
         });
       } catch (err) {
