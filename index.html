@@ -2,117 +2,119 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>The Bright Side</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 1.5rem;
-            background: #fdfdfd;
-            max-width: 800px;
-            margin: auto;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Bright Side</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1.5rem;
+      background: #fdfdfd;
+      max-width: 800px;
+      margin: auto;
+    }
 
-        .output {
-            border: 1px solid #ccc;
-            padding: 1rem;
-            margin-top: 1rem;
-            background: #f9f9f9;
-        }
+    .output {
+      border: 1px solid #ccc;
+      padding: 1rem;
+      margin-top: 1rem;
+      background: #f9f9f9;
+    }
 
-        .headline {
-            font-weight: bold;
-            font-size: 1.1rem;
-            margin-bottom: 0.2rem;
-        }
+    .headline {
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-bottom: 0.2rem;
+    }
 
-        .body {
-            color: #444;
-            font-size: 0.95rem;
-            margin-bottom: 0.4rem;
-        }
+    .body {
+      color: #444;
+      font-size: 0.95rem;
+      margin-bottom: 0.4rem;
+    }
 
-        .bright-summary {
-            font-size: 1rem;
-            padding: 0.8rem 1rem;
-            background: #e8f5e9;
-            color: #2e7d32;
-            margin-bottom: 1.5rem;
-            border-left: 4px solid #81c784;
-        }
+    .bright-summary {
+      padding: 1rem;
+      background: #e8f5e9;
+      color: #2e7d32;
+      margin-bottom: 1.5rem;
+      border-left: 5px solid #81c784;
+    }
 
-        .article-container {
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.8rem;
-            border-bottom: 1px solid #ddd;
-        }
+    .bright-summary p {
+      margin: 0 0 0.8rem;
+      line-height: 1.5;
+    }
 
-        h1 {
-            margin-bottom: 0.4rem;
-        }
+    .bright-summary .credit {
+      font-size: 0.8rem;
+      color: #555;
+      margin-top: 0.5rem;
+    }
 
-        p {
-            margin-top: 0;
-            margin-bottom: 0.8rem;
-            font-size: 0.95rem;
-        }
+    .article-container {
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid #ddd;
+    }
 
-        a {
-            color: #1a0dab;
-            text-decoration: none;
-        }
+    h1 {
+      margin-bottom: 0.4rem;
+    }
 
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
+    a {
+      color: #1a0dab;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 
 <body>
-    <h1>The Bright Side</h1>
-    <p>Fetching today's top news and rewriting the bright side using real-time AI...</p>
-    <div id="output" class="output">Loading...</div>
+  <h1>The Bright Side</h1>
+  <p>Fetching today's top news and rewriting the bright side using real-time AI...</p>
+  <div id="output" class="output">Loading...</div>
 
-    <script>
-        async function fetchBrightNews() {
-            const output = document.getElementById("output");
-            try {
-                window.scrollTo(0, 0); // Reset scroll position
+  <script>
+    async function fetchBrightNews() {
+      const output = document.getElementById("output");
+      try {
+        window.scrollTo(0, 0);
 
-                const res = await fetch("https://workers-playground-blue-block-c846.allenjonesing.workers.dev/api/news");
-                const data = await res.json();
+        const res = await fetch("https://workers-playground-blue-block-c846.allenjonesing.workers.dev/api/news");
+        const data = await res.json();
 
-                if (!data.articles || !Array.isArray(data.articles)) {
-                    output.textContent = "No articles returned.";
-                    return;
-                }
-
-                const brightBlock = `
-                <div class="bright-summary">
-                    ✨ ${data.bright.replace(/^"|"$/g, '')}
-                    <div style="font-size: 0.8rem; color: #555; margin-top: 0.5rem;">
-                    Curated with AI by OpenAI
-                    </div>
-                </div>
-                `;
-
-                const articleBlocks = data.articles.map(article => `
-                <div class="article-container">
-                    <div class="headline">📰 Original: <a href="${article.link}" target="_blank">${article.title}</a></div>
-                    <div class="body">${article.body}</div>
-                </div>
-                `).join("");
-
-                output.innerHTML = brightBlock + articleBlocks;
-
-            } catch (err) {
-                output.textContent = `⚠️ Failed to fetch news: ${err.message}`;
-            }
+        if (!data.articles || !Array.isArray(data.articles)) {
+          output.textContent = "No articles returned.";
+          return;
         }
 
-        fetchBrightNews();
-    </script>
+        const brightBlock = `
+          <div class="bright-summary">
+            ${data.bright.map(p => `<p>✨ ${p}</p>`).join("")}
+            <div class="credit">Curated with AI by OpenAI</div>
+          </div>
+        `;
+
+        const articleBlocks = data.articles.map(article => `
+          <div class="article-container">
+            <div class="headline">📰 Original: <a href="${article.link}" target="_blank">${article.title}</a></div>
+            <div class="body">${article.body}</div>
+          </div>
+        `).join("");
+
+        output.innerHTML = brightBlock + articleBlocks;
+
+      } catch (err) {
+        output.textContent = `⚠️ Failed to fetch news: ${err.message}`;
+      }
+    }
+
+    fetchBrightNews();
+  </script>
 </body>
 
 </html>
